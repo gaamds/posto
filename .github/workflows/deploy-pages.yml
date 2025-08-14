@@ -7,9 +7,17 @@ on:
 permissions:
   contents: write
 
+env:
+  # Ajuste para o caminho da pasta onde existem pubspec.yaml e lib/main.dart
+  APP_DIR: ./POSTO   # exemplo: ./app  ou  ./posto
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.APP_DIR }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,16 +30,14 @@ jobs:
       - name: Enable web
         run: flutter config --enable-web
 
-      - name: Get deps
+      - name: Get dependencies
         run: flutter pub get
 
-      # IMPORTANTE: troque /SEU_REPO/ abaixo pelo nome do seu repositório no GitHub
-      - name: Build (subpath)
+      - name: Build for GitHub Pages
         run: |
           flutter build web --release \
             --base-href /POSTO/
 
-      # SPA fallback: evita 404 em rotas do Flutter Web
       - name: SPA 404 fallback
         run: cp build/web/index.html build/web/404.html
 
@@ -39,4 +45,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          # Publica a pasta de build localizada *dentro* do APP_DIR
+          publish_dir: ${{ env.APP_DIR }}/build/web
