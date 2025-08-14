@@ -1,0 +1,42 @@
+name: Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Enable web
+        run: flutter config --enable-web
+
+      - name: Get deps
+        run: flutter pub get
+
+      # IMPORTANTE: troque /SEU_REPO/ abaixo pelo nome do seu repositório no GitHub
+      - name: Build (subpath)
+        run: |
+          flutter build web --release \
+            --base-href /POSTO/
+
+      # SPA fallback: evita 404 em rotas do Flutter Web
+      - name: SPA 404 fallback
+        run: cp build/web/index.html build/web/404.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
